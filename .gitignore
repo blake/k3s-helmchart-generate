@@ -161,3 +161,8 @@ Temporary Items
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# Application-specific
+!k3s-helmchart-generate/__main__.py
+k3s-helmchart-generate/
+*.pyz

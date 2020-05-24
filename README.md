@@ -19,16 +19,45 @@ simplifying the process of generating the HelmChart CRDs for K3s.
 
 ## Installation
 
+First, clone the repository using `git`.
+
 ```shell
-$ git clone https://github.com/blake/k3s-helmchart-generate.git
-$ cd k3s-helmchart-generate
-$ pip install --requirement requirements.txt
+git clone https://github.com/blake/k3s-helmchart-generate.git
+```
+
+Change into the cloned directory.
+
+```shell
+cd k3s-helmchart-generate
+```
+
+### System-wide dependency installation
+
+Execute the following commands to install `k3s-helmchart-generate`'s dependencies
+into the system-wide Python library path, and make the program available for all
+users of the system.
+
+```shell
+pip install --requirement requirements.txt
+mv k3s-helmchart-generate/__main__.py /usr/local/bin/k3s-helmchart-generate
+chmod +x /usr/local/bin/k3s-helmchart-generate
+```
+
+### Standalone application
+
+You may also install the program as a self-contained, standalone application using
+Python's [zipapp].
+
+```shell
+python -m pip install --requirement requirements.txt --target k3s-helmchart-generate
+python -m zipapp k3s-helmchart-generate --compress --python="/usr/bin/env python3"
+mv k3s-helmchart-generate.pyz /usr/local/bin/k3s-helmchart-generate
 ```
 
 ## Example usage
 
 ```shell
-$ ./k3s-helmchart-generate.py stable/nginx-ingress --name nginx-ingress
+$ k3s-helmchart-generate stable/nginx-ingress --name nginx-ingress
 ---
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
@@ -39,3 +68,5 @@ spec:
   chart: stable/nginx-ingress
 
 ```
+
+[zipapp]: https://docs.python.org/3/library/zipapp.html
