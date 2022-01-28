@@ -22,7 +22,10 @@ class Specification(TypedDict, total=False):
     See https://rancher.com/docs/k3s/latest/en/helm/#helmchart-field-definitions
     for a list of field definitions.
     """
+    bootstrap: bool
     chart: str
+    helmVersion: str
+    jobImage: str
     repo: str
     set: dict[str, str]
     targetNamespace: str
@@ -117,6 +120,13 @@ def generate_helmchart(arguments: argparse.Namespace):
 
     specification = Specification(chart=arguments.chart)
 
+    # Optional HelmChart resource values
+    if arguments.bootstrap:
+        specification["bootstrap"] = arguments.bootstrap
+    if arguments.helm_version:
+        specification["helmVersion"] = arguments.helm_version
+    if arguments.job_image:
+        specification["jobImage"] = arguments.job_image
     if arguments.namespace:
         specification["targetNamespace"] = arguments.namespace
     if arguments.repo:
@@ -173,6 +183,24 @@ def parse_arguments():
         "--tiller-namespace",
         default="kube-system",
         help='Namespace of Helm Controller (default "kube-system")',
+    )
+
+    parser.add_argument(
+        "--bootstrap",
+        help='Set if this chart is needed to bootstrap the cluster (Cloud Controller Manager, etc)',
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--helm-version",
+        choices=["v2", "v3"],
+        default="v3",
+        help='Helm version to use (v2 or v3)',
+    )
+
+    parser.add_argument(
+        "--job-image",
+        help='Specify the image to use when installing the helm chart. E.g. rancher/klipper-helm:v0.3.0 .',
     )
 
     parser.add_argument(
