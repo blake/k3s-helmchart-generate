@@ -31,26 +31,20 @@ Change into the cloned directory.
 cd k3s-helmchart-generate
 ```
 
-### System-wide dependency installation
-
-Execute the following commands to install `k3s-helmchart-generate`'s dependencies
-into the system-wide Python library path, and make the program available for all
-users of the system.
+Execute `build_package.py`'s to create a self-contained executable using Python
+[zipapp].
 
 ```shell
-pip install --requirement requirements.txt
-mv k3s-helmchart-generate/__main__.py /usr/local/bin/k3s-helmchart-generate
-chmod +x /usr/local/bin/k3s-helmchart-generate
+$ ./build_package.py
+Collecting PyYAML>=5.1
+  Using cached PyYAML-6.0-cp39-cp39-macosx_11_0_arm64.whl (173 kB)
+Installing collected packages: PyYAML
+Successfully installed PyYAML-6.0
 ```
 
-### Standalone application
-
-You may also install the program as a self-contained, standalone application using
-Python's [zipapp].
+Move the resultant executable, `k3s-helmchart-generate.pyz`, into your PATH.
 
 ```shell
-python -m pip install --requirement requirements.txt --target k3s-helmchart-generate
-python -m zipapp k3s-helmchart-generate --compress --python="/usr/bin/env python3"
 mv k3s-helmchart-generate.pyz /usr/local/bin/k3s-helmchart-generate
 ```
 
