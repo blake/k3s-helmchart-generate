@@ -7,41 +7,63 @@
 """Helper script to generate HelmChart CRDs for use with k3s"""
 
 import argparse
+from typing import TypedDict
 
 import yaml
 
 
-class literal(str):
+class LiteralStr(str):
     """Literal string class. Inherits from str class."""
 
-    pass
+class Specification(TypedDict, total=False):
+    """
+    A specification object for the Specification field of the HelmChart CRD.
+
+    See https://rancher.com/docs/k3s/latest/en/helm/#helmchart-field-definitions
+    for a list of field definitions.
+    """
+    chart: str
+    repo: str
+    set: dict[str, str]
+    targetNamespace: str
+    valuesContent: LiteralStr
+    version: str
+
+class HelmChart(TypedDict):
+    """
+    A HelmChart resource object.
+    """
+    apiVersion: str
+    kind: str
+    metadata: dict[str, str]
+    spec: Specification
 
 
 def literal_representer(
-    dumper: yaml.dumper.Dumper, data: literal
+    dumper: yaml.dumper.Dumper, data: LiteralStr
 ) -> yaml.nodes.ScalarNode:
     """
-    PyYAML representer to format string as a literal, multiline string with
+    PyYAML representer to format string as a literal string, multiline string with
     newlines preserved
 
     :param dumper: PyYAML dumper object
     :type dumper: class:`yaml.dumper.Dumper`
-    :param data: Literal string data
-    :type data: class:`literal`
+    :param data: LiteralStr string data
+    :type data: class:`LiteralStr`
 
     :returns: A ScalarNode object for the new YAML representer
     :rtype: class:`yaml.nodes.ScalarNode`
     """
     # Return a scalar supporting literal YAML values ('|')  of type string (tag)
-    # for values of type 'literal'
+    # for values of type 'LiteralStr'
     return dumper.represent_scalar(style="|", tag="tag:yaml.org,2002:str", value=data)
 
 
-# Use the literal_representer to serialize 'literal' data types
-yaml.add_representer(data_type=literal, representer=literal_representer)
+# Use the literal_representer to serialize 'LiteralStr' data types
+yaml.add_representer(data_type=LiteralStr, representer=literal_representer)
 
 
-def parse_set_args(arguments: list) -> dict:
+def parse_set_args(arguments: list[str]):
     """
     Parses --set arguments and combines them into a single dictionary
 
@@ -51,7 +73,7 @@ def parse_set_args(arguments: list) -> dict:
     :returns: A dictionary containing all defined set values
     :rtype: dict
     """
-    set_dict = dict()
+    set_dict: dict[str, str] = dict()
     for set_arg in arguments:
         # Parse comma-separated arguments
         arg_parts = set_arg.split(",")
@@ -64,7 +86,7 @@ def parse_set_args(arguments: list) -> dict:
     return set_dict
 
 
-def read_values_files(files: list) -> dict:
+def read_values_files(files: list[str]):
     """
     Reads contents of YAML valueFiles. Returns combined dictionary of values.
 
@@ -74,7 +96,7 @@ def read_values_files(files: list) -> dict:
     :returns: A combined dictionary containing all values
     :rtype: dict
     """
-    values = dict()
+    values: dict[str, str] = dict()
     for filename in files:
         content = yaml.safe_load(filename)
         values.update(content)
@@ -82,7 +104,7 @@ def read_values_files(files: list) -> dict:
     return values
 
 
-def generate_helmchart(arguments: argparse.Namespace) -> dict:
+def generate_helmchart(arguments: argparse.Namespace):
     """
     Returns a dictionary object representing a HelmChart resource
 
@@ -92,18 +114,8 @@ def generate_helmchart(arguments: argparse.Namespace) -> dict:
     :returns: A dictionary representing a HelmChart resource
     :rtype: dict
     """
-    helmchart = dict(
-        apiVersion="helm.cattle.io/v1",
-        kind="HelmChart",
-        metadata={
-            "name": arguments.name,
-            "namespace": arguments.helmcontroller_namespace,
-        },
-        spec={"chart": arguments.chart},
-    )
 
-    # Optional HelmChart resource values
-    specification = dict()
+    specification = Specification(chart=arguments.chart)
 
     if arguments.namespace:
         specification["targetNamespace"] = arguments.namespace
@@ -117,12 +129,18 @@ def generate_helmchart(arguments: argparse.Namespace) -> dict:
         specification["set"] = parse_set_args(arguments.set)
     if arguments.values:
         values = read_values_files(arguments.values)
-        values_str = literal(yaml.dump(data=values))
+        values_str = LiteralStr(yaml.dump(data=values))
         specification["valuesContent"] = values_str
 
-    # Add additional values to HelmChart spec
-    if specification:
-        helmchart["spec"].update(specification)
+    helmchart = HelmChart(
+        apiVersion="helm.cattle.io/v1",
+        kind="HelmChart",
+        metadata={
+            "name": arguments.name,
+            "namespace": arguments.helmcontroller_namespace,
+        },
+        spec=specification
+    )
 
     return helmchart
 
@@ -198,6 +216,7 @@ def parse_arguments():
 
 
 def main():
+    """Main entry point"""
     arguments = parse_arguments()
 
     helmchart = generate_helmchart(arguments)

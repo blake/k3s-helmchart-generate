@@ -14,7 +14,7 @@ simplifying the process of generating the HelmChart CRDs for K3s.
 
 ## Requirements
 
-* Python 3.5 or higher
+* Python 3.6 or higher
 * PyYAML 5.1 or higher
 
 ## Installation
